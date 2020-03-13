@@ -1,0 +1,110 @@
+Exporter version: 6.3.0, Blender version: 2.81 (sub 16)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		Inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		Keep Z-up r-handed  :  no
+		Texture directory   :  C:\Users\Daniel\Google Drive\WWU Classes\CPTR-355\Project\Gun\blend\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Cube.002
+		animation processing begun
+			WARNING: action Cube.004Action has no frames, ignored.
+		processing begun of material:  handgun
+		num positions      :  92
+		num normals        :  92
+		num tangents       :  0
+		num uvs            :  184
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  168
+	processing begun of mesh:  Gun
+		animation processing begun
+			WARNING: action Cube.004Action has no frames, ignored.
+		processing begun of material:  handgun
+		registered as also a user of material:  handgun
+		num positions      :  12258
+		num normals        :  12258
+		num tangents       :  0
+		num uvs            :  24516
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  59160
+	processing begun of node:  muni_rot
+		animation processing begun
+			processing action muni_rot:  in[0 - 10], out[0 - 10]
+	processing begun of node:  bullet shooter
+	processing begun of mesh:  Cube.005
+		animation processing begun
+			processing action pistol slide:  in[0 - 5], out[0 - 5]
+		processing begun of material:  handgun
+		registered as also a user of material:  handgun
+		num positions      :  1887
+		num normals        :  1887
+		num tangents       :  0
+		num uvs            :  3774
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  5610
+	processing begun of mesh:  muzzle fire
+		animation processing begun
+			processing action muzzle fire:  in[0 - 5], out[0 - 5]
+		processing begun of material:  Fire.001
+		num positions      :  13
+		num normals        :  13
+		num tangents       :  0
+		num uvs            :  26
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  24
+	processing begun of mesh:  Gun_trigger
+		animation processing begun
+			processing action Gun_trigger:  in[0 - 5], out[0 - 5]
+		processing begun of material:  handgun
+		registered as also a user of material:  handgun
+		num positions      :  252
+		num normals        :  252
+		num tangents       :  0
+		num uvs            :  504
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  456
+	processing begun of mesh:  hulle
+		processing begun of material:  Material.004
+		num positions      :  12
+		num normals        :  12
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  60
+	processing begun of mesh:  bullet
+		processing begun of material:  Material.001
+		num positions      :  8
+		num normals        :  8
+		num tangents       :  0
+		num uvs            :  16
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  12
+	processing begun of light (DIRECTIONAL):  Hemi.001
+	processing begun of light (DIRECTIONAL):  Hemi
+	processing begun of light (POINT):  Point.001
+	processing begun of light (POINT):  Point
+	processing begun of light (POINT):  bullet_light
+========= Writing of JSON file started =========
+	writing mesh:  Cube.002
+	writing mesh:  Gun
+	writing mesh:  Cube.005
+	writing mesh:  muzzle fire
+	writing mesh:  Gun_trigger
+	writing mesh:  hulle
+	writing mesh:  bullet
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 2.16 secs

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>Daniel Arlt</title>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    </head>
+
+   <body>
+
+    <canvas id="renderCanvas" touch-action="none"></canvas> //touch-action="none" for best results from PEP
+
+    <script>
+        let canvas = document.getElementById("renderCanvas"); // Get the canvas element
+        let engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
+
+        /******* Add the create scene function ******/
+        var createScene = function () {
+            let ground, viewModel, blueMat, grid, gunMat, ray;
+
+            var scene = new BABYLON.Scene(engine);
+            scene.collisionsEnabled = true;
+            scene.gravity = new BABYLON.Vector3(0, -0.3, 0);
+            function setupScene() {
+            }
+
+            var camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(0, 7, -50), scene);
+            //camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0,20,0), scene);
+
+            // Allow control of camera with WASD
+            camera.keysDown.push(83);
+            camera.keysUp.push(87);
+            camera.keysLeft.push(65);
+            camera.keysRight.push(68);
+
+            camera._needMoveForGravity = true;
+
+            camera.speed = 0.5;
+            camera.fov = 1.25;
+            camera.applyGravity = true;
+            camera.ellipsoid = new BABYLON.Vector3(0.5, 1.5, 0.5);
+            camera.checkCollisions = true;
+            camera.attachControl(canvas, true);
+            camera.inputs.remove(camera.inputs.attached.mouse);
+            function setupCamera() {
+            }
+
+            var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
+            function setupLights() {
+            }
+
+            function setupMaterials() {
+                blueMat = new BABYLON.StandardMaterial("blueMat", scene);
+                blueMat.diffuseColor = new BABYLON.Color3(0, 1, 1);
+                blueMat.specularColor = new BABYLON.Color3(1, 1, 1);
+                grid = new BABYLON.StandardMaterial("grid", scene);
+                grid.diffuseTexture = new BABYLON.Texture("Texture/grid1.png", scene);
+                grid.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                gunMat = new BABYLON.StandardMaterial("gunMat", scene);
+                gunMat.diffuseTexture = new BABYLON.Texture("Gun/blend/textures/handgun_C.jpg", scene);
+                gunMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+            }
+
+            function setupWater() {
+                water = BABYLON.Mesh.CreateGroundFromHeightMap("water", "HeightMap/watermap.jpg", 500, 100, 512, 0, 0.5, scene, false);
+                water.material = blueMat;
+                water.position.y = 0;
+                water.visibility = 0.5;
+            }
+
+            function setupGround() {
+                BABYLON.SceneLoader.ImportMesh(null, "./", "HeightMap/heightMap2.babylon", scene, function (meshes, particleSystems, skeletons) {
+                    ground = meshes[0];
+                    ground.scaling = new BABYLON.Vector3(50, 15, 50);
+                    ground.checkCollisions = true;
+                    ground.position.y = 2;
+                    ground.material = grid;
+                })
+            }
+
+            let gun;
+            BABYLON.SceneLoader.ImportMesh(null, "./", "Gun/Blend/Handgun_Packed3.babylon", scene, function (meshes, particleSystems, skeletons) {
+                gun = meshes[0];
+                //gun.position = new BABYLON.Vector3(1.2, 4.25, 52);
+                gun.rotation.y = -Math.PI/2;
+                gun.material = gunMat;
+                gun.setParent(camera);
+            })
+            function setupViewModel() {
+            }
+
+            function setupSprites() {
+                var spriteManagerTrees = new BABYLON.SpriteManager("treesManager", "Sprites/tree.png", 100, {width: 1787, height: 2260}, scene);
+                var tree1 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree1.position = new BABYLON.Vector3(0, 9.6, -28);
+                tree1.size = 17;
+                var tree2 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree2.position = new BABYLON.Vector3(25, 9.6, -28);
+                tree2.size = 17;
+                var tree3 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree3.position = new BABYLON.Vector3(50, 9.6, -28);
+                tree3.size = 17;
+                var tree4 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree4.position = new BABYLON.Vector3(75, 9.6, -28);
+                tree4.size = 17;
+                var tree5 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree5.position = new BABYLON.Vector3(100, 9.6, -28);
+                tree5.size = 17;
+                var tree6 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree6.position = new BABYLON.Vector3(125, 9.6, -28);
+                tree6.size = 17;
+                var tree7 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree7.position = new BABYLON.Vector3(150, 9.6, -28);
+                tree7.size = 17;
+                var tree8 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree8.position = new BABYLON.Vector3(175, 9.6, -28);
+                tree8.size = 17;
+                var tree9 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree9.position = new BABYLON.Vector3(200, 9.6, -28);
+                tree9.size = 17;
+                var tree10 = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree10.position = new BABYLON.Vector3(225, 9.6, -28);
+                tree10.size = 17;
+            }
+
+            function setupTarget() {
+                var target = BABYLON.MeshBuilder.CreateCylinder("target", {diameter: 2, subdivisions: 32, height: 0.2}, scene);
+            }
+
+            function vecToLocal(vector, mesh){
+                var m = mesh.getWorldMatrix();
+                var v = BABYLON.Vector3.TransformCoordinates(vector, m);
+                return v;
+            }
+
+            // ray = new BABYLON.Ray.CreateNewFromTo(gun.position, BABYLON.Vector3(0, 0, 1)).direction
+            function setupRay() {
+                //var ray = new BABYLON.Ray(gun.position, BABYLON.Vector3(0, 0, 1), 300);
+                //ray = camera.getTarget().subtract(camera.position)
+                // console.log(ray);
+
+                // var origin = camera.position;
+                //
+        	    // var forward = new BABYLON.Vector3(0,0,1);
+        	    // forward = vecToLocal(forward, camera);
+                //
+        	    // var direction = forward.subtract(origin);
+        	    // direction = BABYLON.Vector3.Normalize(direction);
+                //
+        	    // var length = 500;
+                //
+        	    // var ray = new BABYLON.Ray(origin, direction, length);
+                //
+        		// let rayHelper = new BABYLON.RayHelper(ray);
+        		// rayHelper.show(scene);
+                //
+                // var hit = scene.pickWithRay(ray);
+                //
+                // if (hit.pickedMesh){
+        		//    hit.pickedMesh.scaling.y += 0.01;
+        	    // }
+
+                // let rayHelper = new BABYLON.RayHelper(ray);
+                // console.log(rayHelper);
+                //rayHelper.show(scene);
+            }
+
+            function setupSkybox() {
+                var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
+                var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+                skyboxMaterial.backFaceCulling = false;
+                skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("Skybox/Skybox", scene, ["_px.png", "_py.png", "_pz.png", "_nx.png", "_ny.png", "_nz.png"]);
+                skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+                skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+                skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+                skybox.material = skyboxMaterial;
+            }
+
+            function setupOrientationLines() {
+                let xLine = BABYLON.MeshBuilder.CreateLines("xLine", {
+                    points: [ new BABYLON.Vector3(0, 0.01, 0), new BABYLON.Vector3(4, 0.01, 0) ],
+                    colors: [new BABYLON.Color4(1, 0, 0, 1), new BABYLON.Color4(1, 0, 0, 1)]
+                }, scene);
+                let yLine = BABYLON.MeshBuilder.CreateLines("yLine", {
+                    points: [ new BABYLON.Vector3(0, 0.01, 0), new BABYLON.Vector3(0, 4.01, 0) ],
+                    colors: [new BABYLON.Color4(0, 1, 0, 1), new BABYLON.Color4(0, 1, 0, 1)]
+                }, scene);
+                let zLine = BABYLON.MeshBuilder.CreateLines("zLine", {
+                    points: [ new BABYLON.Vector3(0, 0.01, 0), new BABYLON.Vector3(0, 0.01, 4) ],
+                    colors: [new BABYLON.Color4(0, 0, 1, 1), new BABYLON.Color4(0, 0, 1, 1)]
+                }, scene);
+            }
+
+            // Render functions
+            setupScene();
+            setupCamera();
+            setupLights();
+            setupMaterials();
+            setupWater();
+            setupGround();
+            setupViewModel();
+            setupSprites();
+            setupTarget();
+            //setupSkybox();
+            setupOrientationLines();
+
+            function shoot() {
+                var animation = new BABYLON.Animation("shoot", "rotation.z", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                var keys = [
+                    {
+                        frame: 0,
+                        value: 0
+                    },
+                    {
+                        frame: 2,
+                        value: Math.PI/12
+                    },
+                    {
+                        frame: 10,
+                        value: 0
+                    }
+                ];
+                //gun.rotate(BABYLON.Axis.Z, Math.PI/12);
+                animation.setKeys(keys);
+                var easingFunction = new BABYLON.SineEase();
+                easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+                animation.setEasingFunction(easingFunction);
+                gun.animations.push(animation);
+
+                gunshot.play();
+                scene.beginAnimation(gun, 0, 10, false, 2);
+            }
+
+            var gunshot = new BABYLON.Sound("Gunshot", "Sounds/pistol_fire2.mp3", scene, null, {
+                volume: 0.5
+            });
+
+            var frame = 0;
+            scene.registerBeforeRender(function() {
+                // frame++
+                // if (frame % 2 == 0) {
+                //     setupRay();
+                // }
+                setupRay();
+
+                // Handle "floating" in water by inverting gravity
+                if (camera.position.y < 2) {
+                    scene.gravity = new BABYLON.Vector3(0, 0.05, 0);
+                }
+                else if (camera.position.y > 4) {
+                    scene.gravity = new BABYLON.Vector3(0, -0.3, 0);
+                }
+            });
+
+            // Used for stopping holding left mouse from triggering multiple animations
+            var lPointerDown = false;
+            scene.onPointerObservable.add((pointerInfo) => {
+                // pointerInfo.event.button == 2  RIGHT mouse button
+                if (pointerInfo.event.buttons & 2) {
+                    // Aim-in while holding right click
+                    camera.fov = 1;
+                    gun.position = new BABYLON.Vector3(0, -0.75, 1.5);
+
+                } else if ((pointerInfo.event.buttons & 2) === 0) {
+                    // Revert back to original view on release
+                    camera.fov = 1.25;
+                    gun.position = new BABYLON.Vector3(1.2, -1.5, 2.2);
+
+                }
+
+                // pointerInfo.event.button == 0  LEFT mouse button
+                if (pointerInfo.event.buttons & 1) {
+                    if (!lPointerDown) {
+                        // Shoot gun with left click
+                        shoot();
+                        var hit = scene.pickWithRay(ray);
+                        console.log(hit.pickedMesh)
+                    }
+                    lPointerDown = true;
+                }
+                else {
+                    lPointerDown = false;
+                }
+            });
+
+            return scene;
+        }
+        /******* End of the create scene function ******/
+
+        let scene = createScene(); //Call the createScene function
+
+        // Register a render loop to repeatedly render the scene
+        engine.runRenderLoop(function () {
+                scene.render();
+        });
+
+        let oldTime = 0;
+        function jump() {
+            camera = scene.cameras[0];
+    		var animation = new BABYLON.Animation("jump", "position.y", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+    		var keys = [
+    			{
+    				frame: 0,
+    				value: camera.position.y
+    			},
+    			{
+    				frame: 30,
+    				value: camera.position.y + 4
+    			}
+    		];
+    		animation.setKeys(keys);
+
+    		var easingFunction = new BABYLON.SineEase();
+    		easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+    		animation.setEasingFunction(easingFunction);
+
+    		camera.animations.push(animation);
+
+            // This section restricts infinite jumping
+            var today = new Date();
+            if (Math.floor(today.getTime()/100) - oldTime > 7) {
+                scene.beginAnimation(camera, 0, 30, false, 2);
+                oldTime = Math.floor(today.getTime()/100)
+            }
+    	}
+
+        // Watch for browser/canvas resize events
+        window.addEventListener("resize", function () {
+                engine.resize();
+        });
+
+        // canvas pointer lock
+        canvas.addEventListener('click', function (event) {
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+            if (canvas.requestPointerLock) canvas.requestPointerLock();
+        });
+
+        document.addEventListener("keydown", function (e) {
+            // console.log(e.keyCode);
+            if (e.keyCode == 27) {
+                document.exitPointerLock();
+            }
+            else if (e.keyCode == 32) {
+                jump();
+            }
+            else if (e.keyCode == 16) {
+                scene.cameras[0].speed = 0.8;
+            }
+            else {
+                scene.cameras[0].speed = 0.5;
+            }
+        });
+
+        // mouse move when pointer is locked
+    	document.addEventListener('mousemove', function(event) {
+            if(document.pointerLockElement === canvas || document.mozPointerLockElement === canvas) {
+
+                var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+                var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+                // apply rotation to active camera
+                scene.activeCamera.rotation.y += movementX * 0.002;
+                scene.activeCamera.rotation.x += movementY * 0.002;
+                scene.activeCamera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, scene.activeCamera.rotation.x));
+            }
+        }, false);
+
+    </script>
+
+   </body>
+
+</html>
