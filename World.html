@@ -38,7 +38,7 @@
 
         /******* Add the create scene function ******/
         var createScene = function () {
-            let ground, viewModel, blueMat, grid, gunMat, ray;
+            let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray;
 
             var scene = new BABYLON.Scene(engine);
             scene.collisionsEnabled = true;
@@ -81,6 +81,12 @@
                 gunMat = new BABYLON.StandardMaterial("gunMat", scene);
                 gunMat.diffuseTexture = new BABYLON.Texture("Gun/blend/textures/handgun_C.jpg", scene);
                 gunMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                targetMat = new BABYLON.StandardMaterial("targetMat", scene);
+                targetMat.diffuseTexture = new BABYLON.Texture("Texture/Target.png", scene);
+                targetMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                target2Mat = new BABYLON.StandardMaterial("targetMat", scene);
+                target2Mat.diffuseTexture = new BABYLON.Texture("Texture/Target2.png", scene);
+                target2Mat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
             }
 
             function setupWater() {
@@ -100,91 +106,142 @@
                 })
             }
 
-            let gun;
+            var smokeSystem = new BABYLON.ParticleSystem("smoke", 100, scene);
+            var sparkSystem = new BABYLON.ParticleSystem("spark", 1000, scene);
+            var hitSystem = new BABYLON.ParticleSystem("hit", 1000, scene);
+
             BABYLON.SceneLoader.ImportMesh(null, "./", "Gun/Blend/Handgun_Packed3.babylon", scene, function (meshes, particleSystems, skeletons) {
                 gun = meshes[0];
                 //gun.position = new BABYLON.Vector3(1.2, 4.25, 52);
                 gun.rotation.y = -Math.PI/2;
                 gun.material = gunMat;
                 gun.setParent(camera);
+                gun.isPickable = false;
+
+                smokeSystem.emitter = gun;
+                sparkSystem.emitter = gun;
             })
             function setupViewModel() {
             }
 
             function setupSprites() {
                 var spriteManagerTrees = new BABYLON.SpriteManager("treesManager", "Sprites/tree.png", 100, {width: 1787, height: 2260}, scene);
-                var tree1 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree1.position = new BABYLON.Vector3(0, 9.6, -28);
-                tree1.size = 17;
-                var tree2 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree2.position = new BABYLON.Vector3(25, 9.6, -28);
-                tree2.size = 17;
-                var tree3 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree3.position = new BABYLON.Vector3(50, 9.6, -28);
-                tree3.size = 17;
-                var tree4 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree4.position = new BABYLON.Vector3(75, 9.6, -28);
-                tree4.size = 17;
-                var tree5 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree5.position = new BABYLON.Vector3(100, 9.6, -28);
-                tree5.size = 17;
-                var tree6 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree6.position = new BABYLON.Vector3(125, 9.6, -28);
-                tree6.size = 17;
-                var tree7 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree7.position = new BABYLON.Vector3(150, 9.6, -28);
-                tree7.size = 17;
-                var tree8 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree8.position = new BABYLON.Vector3(175, 9.6, -28);
-                tree8.size = 17;
-                var tree9 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree9.position = new BABYLON.Vector3(200, 9.6, -28);
-                tree9.size = 17;
-                var tree10 = new BABYLON.Sprite("sprite", spriteManagerTrees);
-                tree10.position = new BABYLON.Vector3(225, 9.6, -28);
-                tree10.size = 17;
+                for (let step = -225; step < 226; step += 25) {
+                    var tree1 = setupTree(spriteManagerTrees, new BABYLON.Vector3(step, 9.6, -28), 17)
+                    var tree2 = setupTree(spriteManagerTrees, new BABYLON.Vector3(step, 9.6, 28), 17)
+                }
             }
 
-            function setupTarget() {
-                var target = BABYLON.MeshBuilder.CreateCylinder("target", {diameter: 2, subdivisions: 32, height: 0.2}, scene);
+            function setupTree(spriteManagerTrees, position, size) {
+                var tree = new BABYLON.Sprite("sprite", spriteManagerTrees);
+                tree.position = position;
+                tree.size = size;
             }
 
-            function vecToLocal(vector, mesh){
-                var m = mesh.getWorldMatrix();
-                var v = BABYLON.Vector3.TransformCoordinates(vector, m);
-                return v;
+            function setupTarget(position, rotx, roty) {
+                target = new BABYLON.MeshBuilder.CreateCylinder("target", {diameter: 2, subdivisions: 32, height: 0.2}, scene);
+                target.position = position;
+                target.rotation.x = rotx;
+                target.rotation.y = roty;
+                target.uniqueId = 1;
+                target.material = targetMat;
+                return target;
             }
 
-            // ray = new BABYLON.Ray.CreateNewFromTo(gun.position, BABYLON.Vector3(0, 0, 1)).direction
-            function setupRay() {
-                //var ray = new BABYLON.Ray(gun.position, BABYLON.Vector3(0, 0, 1), 300);
-                //ray = camera.getTarget().subtract(camera.position)
-                // console.log(ray);
+            function setupParticles() {
+                // Smoke
+                smokeSystem.particleTexture = new BABYLON.Texture("Particles/smoke.png", scene);
+                smokeSystem.targetStopDuration = 0.05;
+                smokeSystem.isLocal = true;
 
-                // var origin = camera.position;
-                //
-        	    // var forward = new BABYLON.Vector3(0,0,1);
-        	    // forward = vecToLocal(forward, camera);
-                //
-        	    // var direction = forward.subtract(origin);
-        	    // direction = BABYLON.Vector3.Normalize(direction);
-                //
-        	    // var length = 500;
-                //
-        	    // var ray = new BABYLON.Ray(origin, direction, length);
-                //
-        		// let rayHelper = new BABYLON.RayHelper(ray);
-        		// rayHelper.show(scene);
-                //
-                // var hit = scene.pickWithRay(ray);
-                //
-                // if (hit.pickedMesh){
-        		//    hit.pickedMesh.scaling.y += 0.01;
-        	    // }
+                smokeSystem.minEmitBox = new BABYLON.Vector3(1.4, .7, 0);
+                smokeSystem.maxEmitBox = new BABYLON.Vector3(1.4, .7, 0);
 
-                // let rayHelper = new BABYLON.RayHelper(ray);
-                // console.log(rayHelper);
-                //rayHelper.show(scene);
+                smokeSystem.colorDead = new BABYLON.Color4(1, 1, 1, 0)
+
+                smokeSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+
+                smokeSystem.emitRate = 100;
+
+                smokeSystem.minSize = 0.1;
+                smokeSystem.maxSize = 0.2;
+
+                smokeSystem.addSizeGradient(0, 0.25);
+                smokeSystem.addSizeGradient(0.25, 0.5);
+
+                smokeSystem.minLifeTime = 0.3;
+                smokeSystem.maxLifeTime = 0.4;
+
+                smokeSystem.minAngularSpeed = -Math.PI;
+                smokeSystem.maxAngularSpeed = Math.PI;
+
+                smokeSystem.minEmitPower = 0.5;
+                smokeSystem.maxEmitPower = 2;
+                smokeSystem.updateSpeed = 0.0075;
+
+                // Spark
+                sparkSystem.particleTexture = new BABYLON.Texture("Particles/spark.png", scene);
+                sparkSystem.targetStopDuration = 0.02;
+                sparkSystem.isLocal = true;
+
+                sparkSystem.minEmitBox = new BABYLON.Vector3(1.4, .7, 0);
+                sparkSystem.maxEmitBox = new BABYLON.Vector3(1.4, .7, 0);
+
+                sparkSystem.colorDead = new BABYLON.Color4(1, 1, 1, 0)
+
+                sparkSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+
+                sparkSystem.emitRate = 50;
+
+                sparkSystem.minSize = 0.1;
+                sparkSystem.maxSize = 0.2;
+
+                sparkSystem.addSizeGradient(0.1, 0.2);
+                sparkSystem.addSizeGradient(0.2, 0.3);
+
+                sparkSystem.minLifeTime = 0.9;
+                sparkSystem.maxLifeTime = 1;
+
+                sparkSystem.minAngularSpeed = -Math.PI;
+                sparkSystem.maxAngularSpeed = Math.PI;
+
+                sparkSystem.direction1 = new BABYLON.Vector3(1, -0.4, -0.4);
+                sparkSystem.direction2 = new BABYLON.Vector3(1, 0.4, 0.4);
+
+                sparkSystem.minEmitPower = 0.5;
+                sparkSystem.maxEmitPower = 0.5;
+                sparkSystem.updateSpeed = 0.075;
+
+                // Hit
+                hitSystem.particleTexture = new BABYLON.Texture("Particles/spark.png", scene);
+                hitSystem.targetStopDuration = 0.05;
+                hitSystem.isLocal = true;
+
+                hitSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0);
+                hitSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
+
+                hitSystem.colorDead = new BABYLON.Color4(1, 1, 1, 0)
+
+                hitSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+
+                hitSystem.emitRate = 50;
+
+                hitSystem.minSize = 0.1;
+                hitSystem.maxSize = 0.2;
+
+                hitSystem.addSizeGradient(0.1, 0.2);
+                hitSystem.addSizeGradient(0.2, 0.3);
+
+                hitSystem.minLifeTime = 0.4;
+                hitSystem.maxLifeTime = 0.5;
+
+                hitSystem.minAngularSpeed = -Math.PI;
+                hitSystem.maxAngularSpeed = Math.PI;
+
+                hitSystem.minEmitPower = 0.5;
+                hitSystem.maxEmitPower = 0.5;
+                hitSystem.updateSpeed = 0.01;
+
             }
 
             function setupSkybox() {
@@ -220,11 +277,14 @@
             setupMaterials();
             setupWater();
             setupGround();
+            test = setupTarget(new BABYLON.Vector3(0, 4, -40), Math.PI/2, 0);
+            test2 = setupTarget(new BABYLON.Vector3(0, 10, -40), Math.PI/2, Math.PI/4);
             setupViewModel();
             setupSprites();
-            setupTarget();
+            setupParticles();
             //setupSkybox();
-            setupOrientationLines();
+            //setupOrientationLines();
+
 
             function shoot() {
                 var animation = new BABYLON.Animation("shoot", "rotation.z", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
@@ -250,6 +310,9 @@
                 gun.animations.push(animation);
 
                 gunshot.play();
+                // Sparks only work some of the time. idk why.
+                sparkSystem.start();
+                setTimeout(() => {  smokeSystem.start(); }, 200);
                 scene.beginAnimation(gun, 0, 10, false, 2);
             }
 
@@ -257,13 +320,8 @@
                 volume: 0.5
             });
 
-            var frame = 0;
             scene.registerBeforeRender(function() {
-                // frame++
-                // if (frame % 2 == 0) {
-                //     setupRay();
-                // }
-                setupRay();
+                ray = camera.getForwardRay();
 
                 // Handle "floating" in water by inverting gravity
                 if (camera.position.y < 2) {
@@ -295,8 +353,18 @@
                     if (!lPointerDown) {
                         // Shoot gun with left click
                         shoot();
-                        var hit = scene.pickWithRay(ray);
-                        console.log(hit.pickedMesh)
+                        pickedResult = scene.pickWithRay(ray);
+                        if (pickedResult.hit) {
+                            hitSystem.direction1 = new BABYLON.Vector3(-ray.direction.x - 0.4, -ray.direction.y - 0.4, -ray.direction.z - 0.4);
+                            hitSystem.direction2 = new BABYLON.Vector3(-ray.direction.x + 0.4, -ray.direction.y + 0.4, -ray.direction.z + 0.4);
+                            hitSystem.emitter = pickedResult.pickedPoint;
+                            hitSystem.start();
+                            var mesh = pickedResult.pickedMesh;
+                            if (mesh.uniqueId == 1) {
+                                mesh.position.y += 0.1;
+                                mesh.material = target2Mat;
+                            }
+                        }
                     }
                     lPointerDown = true;
                 }
