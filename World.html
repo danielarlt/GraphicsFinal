@@ -38,7 +38,7 @@
 
         /******* Add the create scene function ******/
         var createScene = function () {
-            let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray;
+            let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray, gunshot;
 
             var scene = new BABYLON.Scene(engine);
             scene.collisionsEnabled = true;
@@ -144,6 +144,7 @@
                 target.rotation.x = rotx;
                 target.rotation.y = roty;
                 target.uniqueId = 1;
+                target.scaling = new BABYLON.Vector3(2, 2, 2);
                 target.material = targetMat;
                 return target;
             }
@@ -151,7 +152,7 @@
             function setupParticles() {
                 // Smoke
                 smokeSystem.particleTexture = new BABYLON.Texture("Particles/smoke.png", scene);
-                smokeSystem.targetStopDuration = 0.05;
+                smokeSystem.targetStopDuration = 0.5;
                 smokeSystem.isLocal = true;
 
                 smokeSystem.minEmitBox = new BABYLON.Vector3(1.4, .7, 0);
@@ -244,6 +245,13 @@
 
             }
 
+            function setupSounds() {
+                // Setup gunshot sound
+                gunshot = new BABYLON.Sound("Gunshot", "Sounds/pistol_fire2.mp3", scene, null, {
+                    volume: 0.5
+                });
+            }
+
             function setupSkybox() {
                 var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
                 var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
@@ -282,43 +290,62 @@
             setupViewModel();
             setupSprites();
             setupParticles();
+            setupSounds();
             //setupSkybox();
             //setupOrientationLines();
 
-
+            let shots = 0;
+            let shotTime = 1000000000000;
+            let canShoot = true;
             function shoot() {
-                var animation = new BABYLON.Animation("shoot", "rotation.z", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
-                var keys = [
-                    {
-                        frame: 0,
-                        value: 0
-                    },
-                    {
-                        frame: 2,
-                        value: Math.PI/12
-                    },
-                    {
-                        frame: 10,
-                        value: 0
+                if (canShoot) {
+                    var animation = new BABYLON.Animation("shoot", "rotation.z", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                    var keys = [
+                        {
+                            frame: 0,
+                            value: 0
+                        },
+                        {
+                            frame: 2,
+                            value: Math.PI/12
+                        },
+                        {
+                            frame: 10,
+                            value: 0
+                        }
+                    ];
+                    //gun.rotate(BABYLON.Axis.Z, Math.PI/12);
+                    animation.setKeys(keys);
+                    var easingFunction = new BABYLON.SineEase();
+                    easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+                    animation.setEasingFunction(easingFunction);
+                    gun.animations.push(animation);
+
+                    gunshot.play();
+                    // Sparks only work some of the time. idk why.
+                    sparkSystem.start();
+
+                    var today = new Date();
+                    if (Math.floor(today.getTime()/100) - shotTime < 3) {
+                        shots++
+                        if (shots > 5) {
+                            smokeSystem.start();
+                            canShoot = false;
+                        }
+                        shotTime = Math.floor(today.getTime()/100)
                     }
-                ];
-                //gun.rotate(BABYLON.Axis.Z, Math.PI/12);
-                animation.setKeys(keys);
-                var easingFunction = new BABYLON.SineEase();
-                easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
-                animation.setEasingFunction(easingFunction);
-                gun.animations.push(animation);
-
-                gunshot.play();
-                // Sparks only work some of the time. idk why.
-                sparkSystem.start();
-                setTimeout(() => {  smokeSystem.start(); }, 200);
-                scene.beginAnimation(gun, 0, 10, false, 2);
+                    else {
+                        shots = 0;
+                        shotTime = 1000000000000;
+                    }
+                    scene.beginAnimation(gun, 0, 10, false, 2);
+                    return true;
+                }
+                else {
+                    setTimeout(() => {  canShoot = true; }, 1300)
+                    return false;
+                }
             }
-
-            var gunshot = new BABYLON.Sound("Gunshot", "Sounds/pistol_fire2.mp3", scene, null, {
-                volume: 0.5
-            });
 
             scene.registerBeforeRender(function() {
                 ray = camera.getForwardRay();
@@ -335,6 +362,18 @@
             // Used for stopping holding left mouse from triggering multiple animations
             var lPointerDown = false;
             scene.onPointerObservable.add((pointerInfo) => {
+                // mouse move when pointer is locked
+                if(document.pointerLockElement === canvas || document.mozPointerLockElement === canvas) {
+
+                    var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+                    var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+                    // apply rotation to active camera
+                    scene.activeCamera.rotation.y += movementX * 0.002;
+                    scene.activeCamera.rotation.x += movementY * 0.002;
+                    scene.activeCamera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, scene.activeCamera.rotation.x));
+                }
+
                 // pointerInfo.event.button == 2  RIGHT mouse button
                 if (pointerInfo.event.buttons & 2) {
                     // Aim-in while holding right click
@@ -351,18 +390,19 @@
                 // pointerInfo.event.button == 0  LEFT mouse button
                 if (pointerInfo.event.buttons & 1) {
                     if (!lPointerDown) {
-                        // Shoot gun with left click
-                        shoot();
-                        pickedResult = scene.pickWithRay(ray);
-                        if (pickedResult.hit) {
-                            hitSystem.direction1 = new BABYLON.Vector3(-ray.direction.x - 0.4, -ray.direction.y - 0.4, -ray.direction.z - 0.4);
-                            hitSystem.direction2 = new BABYLON.Vector3(-ray.direction.x + 0.4, -ray.direction.y + 0.4, -ray.direction.z + 0.4);
-                            hitSystem.emitter = pickedResult.pickedPoint;
-                            hitSystem.start();
-                            var mesh = pickedResult.pickedMesh;
-                            if (mesh.uniqueId == 1) {
-                                mesh.position.y += 0.1;
-                                mesh.material = target2Mat;
+                        // Shoot gun with left click if allowed
+                        if (shoot()) {
+                            pickedResult = scene.pickWithRay(ray);
+                            if (pickedResult.hit) {
+                                hitSystem.direction1 = new BABYLON.Vector3(-ray.direction.x - 0.4, -ray.direction.y - 0.4, -ray.direction.z - 0.4);
+                                hitSystem.direction2 = new BABYLON.Vector3(-ray.direction.x + 0.4, -ray.direction.y + 0.4, -ray.direction.z + 0.4);
+                                hitSystem.emitter = pickedResult.pickedPoint;
+                                hitSystem.start();
+                                var mesh = pickedResult.pickedMesh;
+                                if (mesh.uniqueId == 1) {
+                                    mesh.position.y += 0.1;
+                                    mesh.material = target2Mat;
+                                }
                             }
                         }
                     }
@@ -440,20 +480,6 @@
                 scene.cameras[0].speed = 0.5;
             }
         });
-
-        // mouse move when pointer is locked
-    	document.addEventListener('mousemove', function(event) {
-            if(document.pointerLockElement === canvas || document.mozPointerLockElement === canvas) {
-
-                var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-                var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-                // apply rotation to active camera
-                scene.activeCamera.rotation.y += movementX * 0.002;
-                scene.activeCamera.rotation.x += movementY * 0.002;
-                scene.activeCamera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, scene.activeCamera.rotation.x));
-            }
-        }, false);
 
     </script>
 
