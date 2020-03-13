@@ -26,6 +26,8 @@
         <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
         <script src="https://cdn.babylonjs.com/Oimo.js"></script>
         <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
     </head>
 
    <body>
@@ -38,14 +40,21 @@
 
         /******* Add the create scene function ******/
         var createScene = function () {
-            let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray, gunshot;
+            let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray, gunshot,
+            impact, music, ding, splash, cooldown, bridge, grid2, targetNum = 0, hud;
+            let targetList = [];
 
+            // Setup scene
             var scene = new BABYLON.Scene(engine);
             scene.collisionsEnabled = true;
             scene.gravity = new BABYLON.Vector3(0, -0.3, 0);
-            function setupScene() {
-            }
 
+            // Initialize particle systems
+            var smokeSystem = new BABYLON.ParticleSystem("smoke", 100, scene);
+            var sparkSystem = new BABYLON.ParticleSystem("spark", 1000, scene);
+            var hitSystem = new BABYLON.ParticleSystem("hit", 1000, scene);
+
+            // Setup camera
             var camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(0, 7, -50), scene);
             //camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0,20,0), scene);
 
@@ -64,11 +73,9 @@
             camera.checkCollisions = true;
             camera.attachControl(canvas, true);
             camera.inputs.remove(camera.inputs.attached.mouse);
-            function setupCamera() {
-            }
 
-            var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
             function setupLights() {
+                var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
             }
 
             function setupMaterials() {
@@ -78,6 +85,9 @@
                 grid = new BABYLON.StandardMaterial("grid", scene);
                 grid.diffuseTexture = new BABYLON.Texture("Texture/grid1.png", scene);
                 grid.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                grid2 = new BABYLON.StandardMaterial("grid", scene);
+                grid2.diffuseTexture = new BABYLON.Texture("Texture/grid2.png", scene);
+                grid2.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
                 gunMat = new BABYLON.StandardMaterial("gunMat", scene);
                 gunMat.diffuseTexture = new BABYLON.Texture("Gun/blend/textures/handgun_C.jpg", scene);
                 gunMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
@@ -90,7 +100,7 @@
             }
 
             function setupWater() {
-                water = BABYLON.Mesh.CreateGroundFromHeightMap("water", "HeightMap/watermap.jpg", 500, 100, 512, 0, 0.5, scene, false);
+                water = BABYLON.Mesh.CreateGroundFromHeightMap("water", "HeightMap/watermap.jpg", 500, 100, 512, 0, 2, scene, false);
                 water.material = blueMat;
                 water.position.y = 0;
                 water.visibility = 0.5;
@@ -106,22 +116,28 @@
                 })
             }
 
-            var smokeSystem = new BABYLON.ParticleSystem("smoke", 100, scene);
-            var sparkSystem = new BABYLON.ParticleSystem("spark", 1000, scene);
-            var hitSystem = new BABYLON.ParticleSystem("hit", 1000, scene);
-
-            BABYLON.SceneLoader.ImportMesh(null, "./", "Gun/Blend/Handgun_Packed3.babylon", scene, function (meshes, particleSystems, skeletons) {
-                gun = meshes[0];
-                //gun.position = new BABYLON.Vector3(1.2, 4.25, 52);
-                gun.rotation.y = -Math.PI/2;
-                gun.material = gunMat;
-                gun.setParent(camera);
-                gun.isPickable = false;
-
-                smokeSystem.emitter = gun;
-                sparkSystem.emitter = gun;
-            })
             function setupViewModel() {
+                BABYLON.SceneLoader.ImportMesh(null, "./", "Gun/Blend/Handgun_Packed3.babylon", scene, function (meshes, particleSystems, skeletons) {
+                    gun = meshes[0];
+                    //gun.position = new BABYLON.Vector3(1.2, 4.25, 52);
+                    gun.rotation.y = -Math.PI/2;
+                    gun.material = gunMat;
+                    gun.setParent(camera);
+                    gun.isPickable = false;
+
+                    smokeSystem.emitter = gun;
+                    sparkSystem.emitter = gun;
+                })
+            }
+
+            function setupBridge() {
+                BABYLON.SceneLoader.ImportMesh(null, "./", "Models/bridge.babylon", scene, function (meshes, particleSystems, skeletons) {
+                    bridge = meshes[0];
+                    bridge.position = new BABYLON.Vector3(12, -1.2, 0);
+                    bridge.material = grid2;
+                    bridge.checkCollisions = true;
+                    bridge.scaling = new BABYLON.Vector3(3.2, 3.2, 3.185);
+                })
             }
 
             function setupSprites() {
@@ -146,6 +162,8 @@
                 target.uniqueId = 1;
                 target.scaling = new BABYLON.Vector3(2, 2, 2);
                 target.material = targetMat;
+                targetNum++;
+                targetList.push(target);
                 return target;
             }
 
@@ -250,6 +268,44 @@
                 gunshot = new BABYLON.Sound("Gunshot", "Sounds/pistol_fire2.mp3", scene, null, {
                     volume: 0.5
                 });
+                // Setup impact sound
+                impact = new BABYLON.Sound("Impact", "Sounds/ric1.wav", scene, null, {
+                    volume: 0.6,
+                    spatialSound: true,
+                    distanceModel: "inverse"
+                });
+                // Setup background music
+                music = new BABYLON.Sound("Music", "Sounds/music.wav", scene, null, {
+                    volume: 0.1,
+                    loop: true,
+                    autoplay: true
+                });
+                // Setup target ding
+                ding = new BABYLON.Sound("Ding", "Sounds/Ding.mp3", scene, null, {
+                    volume: 0.3,
+                });
+                // Setup splash
+                splash = new BABYLON.Sound("Splash", "Sounds/splash.mp3", scene, null, {
+                    volume: 0.3,
+                });
+                // Setup cooldown
+                cooldown = new BABYLON.Sound("Cooldown", "Sounds/cooldown.wav", scene, null, {
+                    volume: 0.3,
+                });
+            }
+
+            function setupGUI() {
+                // GUI
+                var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+                hud = BABYLON.GUI.Button.CreateSimpleButton("but1", "Targets remaining: " + targetNum);
+                hud.width = "200px"
+                hud.height = "50px";
+                hud.color = "black";
+                hud.cornerRadius = 10;
+                hud.background = "red";
+                hud.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+                advancedTexture.addControl(hud);
             }
 
             function setupSkybox() {
@@ -279,19 +335,21 @@
             }
 
             // Render functions
-            setupScene();
-            setupCamera();
+            // setupScene();
+            // setupCamera();
             setupLights();
             setupMaterials();
             setupWater();
             setupGround();
-            test = setupTarget(new BABYLON.Vector3(0, 4, -40), Math.PI/2, 0);
-            test2 = setupTarget(new BABYLON.Vector3(0, 10, -40), Math.PI/2, Math.PI/4);
+            t1 = setupTarget(new BABYLON.Vector3(7.5, 2, -0.15), Math.PI/2, Math.PI/2);
+            t2 = setupTarget(new BABYLON.Vector3(16.5, 2, -0.15), Math.PI/2, Math.PI/2);
+            setupBridge();
             setupViewModel();
             setupSprites();
             setupParticles();
             setupSounds();
-            //setupSkybox();
+            setupGUI();
+            // setupSkybox();
             //setupOrientationLines();
 
             let shots = 0;
@@ -330,6 +388,7 @@
                         shots++
                         if (shots > 5) {
                             smokeSystem.start();
+                            cooldown.play();
                             canShoot = false;
                         }
                         shotTime = Math.floor(today.getTime()/100)
@@ -347,15 +406,22 @@
                 }
             }
 
+
+            let canSplash = true;
             scene.registerBeforeRender(function() {
                 ray = camera.getForwardRay();
 
                 // Handle "floating" in water by inverting gravity
                 if (camera.position.y < 2) {
                     scene.gravity = new BABYLON.Vector3(0, 0.05, 0);
+                    if (canSplash) {
+                        splash.play();
+                        canSplash = false;
+                    }
                 }
                 else if (camera.position.y > 4) {
                     scene.gravity = new BABYLON.Vector3(0, -0.3, 0);
+                    canSplash = true;
                 }
             });
 
@@ -398,10 +464,33 @@
                                 hitSystem.direction2 = new BABYLON.Vector3(-ray.direction.x + 0.4, -ray.direction.y + 0.4, -ray.direction.z + 0.4);
                                 hitSystem.emitter = pickedResult.pickedPoint;
                                 hitSystem.start();
+                                impact.setPosition(pickedResult.pickedPoint);
+                                setTimeout(() => {  impact.play(); }, 100)
+                                console.log(pickedResult.pickedPoint);
                                 var mesh = pickedResult.pickedMesh;
                                 if (mesh.uniqueId == 1) {
-                                    mesh.position.y += 0.1;
                                     mesh.material = target2Mat;
+                                    mesh.uniqueId = 0;
+                                    targetNum--;
+                                    if (targetNum != 0) {
+                                        hud.textBlock.text = "Targets remaining: " + targetNum;
+                                    }
+                                    else {
+                                        hud.textBlock.text = "You win!!";
+                                        setTimeout(() => {
+                                            var check = confirm("You won! Reset the targets?");
+                                            if (check) {
+                                                for (i = 0; i < targetList.length; i++) {
+                                                    targetList[i].material = targetMat;
+                                                    targetList[i].uniqueId = 1;
+                                                    targetNum++;
+                                                }
+                                                hud.textBlock.text = "Targets remaining: " + targetNum;
+                                            }
+                                        }, 1000)
+
+                                    }
+                                    ding.play();
                                 }
                             }
                         }
