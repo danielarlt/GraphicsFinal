@@ -41,7 +41,7 @@
         /******* Add the create scene function ******/
         var createScene = function () {
             let gun, ground, viewModel, blueMat, grid, gunMat, target, targetMat, target2Mat, ray, gunshot,
-            impact, music, ding, splash, cooldown, bridge, grid2, targetNum = 0, hud;
+            impact, music, ding, splash, cooldown, bridge, bridge2, grid2, targetNum = 0, hud, win;
             let targetList = [];
 
             // Setup scene
@@ -69,7 +69,7 @@
             camera.speed = 0.5;
             camera.fov = 1.25;
             camera.applyGravity = true;
-            camera.ellipsoid = new BABYLON.Vector3(0.5, 1.5, 0.5);
+            camera.ellipsoid = new BABYLON.Vector3(1.25, 1.5, 1.25);
             camera.checkCollisions = true;
             camera.attachControl(canvas, true);
             camera.inputs.remove(camera.inputs.attached.mouse);
@@ -137,7 +137,70 @@
                     bridge.material = grid2;
                     bridge.checkCollisions = true;
                     bridge.scaling = new BABYLON.Vector3(3.2, 3.2, 3.185);
+                    bridge2 = bridge.clone();
+                    bridge2.position = new BABYLON.Vector3(-12, -1.2, 0);
                 })
+            }
+
+            function setupWall(position, rotx, roty, rotz, ht, wd) {
+                var wall = new BABYLON.MeshBuilder.CreateBox("wall", {height: ht, width: wd, depth: 2}, scene);
+                wall.position = position;
+                wall.rotation.x = rotx;
+                wall.rotation.y = roty;
+                wall.rotation.z = rotz;
+                wall.material = grid2;
+                wall.checkCollisions = true;
+            }
+
+            function setupWalls() {
+                // Spawn side
+                var w1 = setupWall(new BABYLON.Vector3(-25, 5, -81), 0, Math.PI/4, 0, 8, 60);
+                var w2 = setupWall(new BABYLON.Vector3(25, 5, -81), 0, -Math.PI/4, 0, 8, 60);
+                var w3 = setupWall(new BABYLON.Vector3(75, 5, -40), 0, 0, 0, 8, 60);
+                var w4 = setupWall(new BABYLON.Vector3(-75, 5, -40), 0, 0, 0, 8, 60);
+                var w5 = setupWall(new BABYLON.Vector3(106, 5, -59), 0, Math.PI/2, 0, 8, 40);
+                var w6 = setupWall(new BABYLON.Vector3(-106, 5, -59), 0, Math.PI/2, 0, 8, 40);
+                var w7 = setupWall(new BABYLON.Vector3(87, 5, -80), 0, 0, 0, 8, 40);
+                var w8 = setupWall(new BABYLON.Vector3(-87, 5, -80), 0, 0, 0, 8, 40);
+                var w9 = setupWall(new BABYLON.Vector3(66, 2.5, -61), 0, Math.PI/2, 0, 4, 40);
+                var w10 = setupWall(new BABYLON.Vector3(-66, 2.5, -61), 0, Math.PI/2, 0, 4, 40);
+                var w11 = setupWall(new BABYLON.Vector3(66, 7.5, -61), 0, Math.PI/2, 0, 3, 40);
+                var w12 = setupWall(new BABYLON.Vector3(-66, 7.5, -61), 0, Math.PI/2, 0, 3, 40);
+                var w13 = setupWall(new BABYLON.Vector3(137, 5, -40), 0, 0, 0, 8, 60);
+                var w14 = setupWall(new BABYLON.Vector3(-137, 5, -40), 0, 0, 0, 8, 60);
+                var w13 = setupWall(new BABYLON.Vector3(166, 5, -71), 0, Math.PI/2, 0, 8, 60);
+                var w14 = setupWall(new BABYLON.Vector3(-166, 5, -71), 0, Math.PI/2, 0, 8, 60);
+                var w15 = setupWall(new BABYLON.Vector3(145.5, 4.535, -97), Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w16 = setupWall(new BABYLON.Vector3(-145.5, 4.535, -97), -Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w17 = setupWall(new BABYLON.Vector3(186.5, 4.535, -97), -Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w18 = setupWall(new BABYLON.Vector3(-186.5, 4.535, -97), Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w19 = setupWall(new BABYLON.Vector3(86.3, 1.875, -60), Math.PI/2.5, Math.PI/2, Math.PI/2, 8, 40);
+                var w20 = setupWall(new BABYLON.Vector3(-86.3, 1.875, -60),- Math.PI/2.5, Math.PI/2, Math.PI/2, 8, 40);
+
+                // Opposite side
+                var w21 = setupWall(new BABYLON.Vector3(-25, 5, 81), 0, -Math.PI/4, 0, 8, 60);
+                var w22 = setupWall(new BABYLON.Vector3(25, 5, 81), 0, Math.PI/4, 0, 8, 60);
+                var w23 = setupWall(new BABYLON.Vector3(75, 5, 40), 0, 0, 0, 8, 60);
+                var w24 = setupWall(new BABYLON.Vector3(-75, 5, 40), 0, 0, 0, 8, 60);
+                var w25 = setupWall(new BABYLON.Vector3(106, 5, 59), 0, Math.PI/2, 0, 8, 40);
+                var w26 = setupWall(new BABYLON.Vector3(-106, 5, 59), 0, Math.PI/2, 0, 8, 40);
+                var w27 = setupWall(new BABYLON.Vector3(87, 5, 80), 0, 0, 0, 8, 40);
+                var w28 = setupWall(new BABYLON.Vector3(-87, 5, 80), 0, 0, 0, 8, 40);
+                var w29 = setupWall(new BABYLON.Vector3(66, 2.5, 61), 0, Math.PI/2, 0, 4, 40);
+                var w30 = setupWall(new BABYLON.Vector3(-66, 2.5, 61), 0, Math.PI/2, 0, 4, 40);
+                var w31 = setupWall(new BABYLON.Vector3(66, 7.5, 61), 0, Math.PI/2, 0, 3, 40);
+                var w32 = setupWall(new BABYLON.Vector3(-66, 7.5, 61), 0, Math.PI/2, 0, 3, 40);
+                var w33 = setupWall(new BABYLON.Vector3(137, 5, 40), 0, 0, 0, 8, 60);
+                var w34 = setupWall(new BABYLON.Vector3(-137, 5, 40), 0, 0, 0, 8, 60);
+                var w35 = setupWall(new BABYLON.Vector3(166, 5, 71), 0, Math.PI/2, 0, 8, 60);
+                var w36 = setupWall(new BABYLON.Vector3(-166, 5, 71), 0, Math.PI/2, 0, 8, 60);
+                var w37 = setupWall(new BABYLON.Vector3(145.5, 4.535, 97), Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w38 = setupWall(new BABYLON.Vector3(-145.5, 4.535, 97), -Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w39 = setupWall(new BABYLON.Vector3(186.5, 4.535, 97), -Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w40 = setupWall(new BABYLON.Vector3(-186.5, 4.535, 97), Math.PI/2.25, Math.PI/2, Math.PI/2, 8, 40);
+                var w41 = setupWall(new BABYLON.Vector3(86.3, 1.875, 60), Math.PI/2.5, Math.PI/2, Math.PI/2, 8, 40);
+                var w42 = setupWall(new BABYLON.Vector3(-86.3, 1.875, 60),- Math.PI/2.5, Math.PI/2, Math.PI/2, 8, 40);
+
             }
 
             function setupSprites() {
@@ -162,9 +225,77 @@
                 target.uniqueId = 1;
                 target.scaling = new BABYLON.Vector3(2, 2, 2);
                 target.material = targetMat;
+                target.checkCollisions = true;
                 targetNum++;
                 targetList.push(target);
                 return target;
+            }
+
+            function setupMovingTarget(position, rotx, roty, dist) {
+                target = setupTarget(position, rotx, roty);
+                var animate = new BABYLON.Animation("translate", "position.x", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                var keys = new Array();
+                  keys.push({
+                    frame: 0,
+                    value: target.position.x
+                  });
+                  keys.push({
+                    frame: 50,
+                    value: target.position.x + dist
+                  });
+                  keys.push({
+                    frame: 100,
+                    value: target.position.x
+                  });
+                  animate.setKeys(keys);
+                  target.animations.push(animate);
+                  scene.beginAnimation(target, 0, 100, true);
+            }
+
+            function hideTargets() {
+                // Bridge targets
+                var t1 = setupTarget(new BABYLON.Vector3(7.5, 2, -0.15), Math.PI/2, Math.PI/2);
+                var t2 = setupTarget(new BABYLON.Vector3(16.5, 2, -0.15), Math.PI/2, Math.PI/2);
+                var t3 = setupTarget(new BABYLON.Vector3(-7.5, 2, -0.15), Math.PI/2, Math.PI/2);
+                var t4 = setupTarget(new BABYLON.Vector3(-16.5, 2, -0.15), Math.PI/2, Math.PI/2);
+
+                // Spawn side targets
+                var t5 = setupTarget(new BABYLON.Vector3(0, 7, -101), Math.PI/2, 0);
+                var t6 = setupTarget(new BABYLON.Vector3(105, 6, -53), Math.PI/2, Math.PI/2);
+                var t7 = setupTarget(new BABYLON.Vector3(-105, 6, -53), Math.PI/2, Math.PI/2);
+                var t8 = setupTarget(new BABYLON.Vector3(105, 6, -45), Math.PI/2, Math.PI/2);
+                var t9 = setupTarget(new BABYLON.Vector3(-105, 6, -45), Math.PI/2, Math.PI/2);
+                var t10 = setupTarget(new BABYLON.Vector3(105, 6, -67), Math.PI/2, Math.PI/2);
+                var t11 = setupTarget(new BABYLON.Vector3(-105, 6, -67), Math.PI/2, Math.PI/2);
+                var t12 = setupTarget(new BABYLON.Vector3(105, 6, -75), Math.PI/2, Math.PI/2);
+                var t13 = setupTarget(new BABYLON.Vector3(-105, 6, -75), Math.PI/2, Math.PI/2);
+                var t14 = setupTarget(new BABYLON.Vector3(11, 6, -99), Math.PI/2, Math.PI/2);
+                var t15 = setupTarget(new BABYLON.Vector3(-11, 6, -99), Math.PI/2, Math.PI/2);
+                var t16 = setupTarget(new BABYLON.Vector3(169, 4.5, -101), Math.PI/2, 0);
+                var t17 = setupTarget(new BABYLON.Vector3(-169, 4.5, -101), Math.PI/2, 0);
+
+                // Moving targets
+                var t18 = setupMovingTarget(new BABYLON.Vector3(112, 6, -43), Math.PI/2, 0, 48);
+                var t18 = setupMovingTarget(new BABYLON.Vector3(-160, 6, -43), Math.PI/2, 0, 48);
+
+                // Opposite side targets
+                var t19 = setupTarget(new BABYLON.Vector3(0, 7, 101), Math.PI/2, 0);
+                var t20 = setupTarget(new BABYLON.Vector3(105, 6, 53), Math.PI/2, Math.PI/2);
+                var t21 = setupTarget(new BABYLON.Vector3(-105, 6, 53), Math.PI/2, Math.PI/2);
+                var t22 = setupTarget(new BABYLON.Vector3(105, 6, 45), Math.PI/2, Math.PI/2);
+                var t23 = setupTarget(new BABYLON.Vector3(-105, 6, 45), Math.PI/2, Math.PI/2);
+                var t24 = setupTarget(new BABYLON.Vector3(105, 6, 67), Math.PI/2, Math.PI/2);
+                var t25 = setupTarget(new BABYLON.Vector3(-105, 6, 67), Math.PI/2, Math.PI/2);
+                var t26 = setupTarget(new BABYLON.Vector3(105, 6, 75), Math.PI/2, Math.PI/2);
+                var t27 = setupTarget(new BABYLON.Vector3(-105, 6, 75), Math.PI/2, Math.PI/2);
+                var t28 = setupTarget(new BABYLON.Vector3(11, 6, 99), Math.PI/2, Math.PI/2);
+                var t29 = setupTarget(new BABYLON.Vector3(-11, 6, 99), Math.PI/2, Math.PI/2);
+                var t30 = setupTarget(new BABYLON.Vector3(169, 4.5, 101), Math.PI/2, 0);
+                var t31 = setupTarget(new BABYLON.Vector3(-169, 4.5, 101), Math.PI/2, 0);
+
+                // Moving targets
+                var t32 = setupMovingTarget(new BABYLON.Vector3(112, 6, 43), Math.PI/2, 0, 48);
+                var t33 = setupMovingTarget(new BABYLON.Vector3(-160, 6, 43), Math.PI/2, 0, 48);
             }
 
             function setupParticles() {
@@ -292,12 +423,17 @@
                 cooldown = new BABYLON.Sound("Cooldown", "Sounds/cooldown.wav", scene, null, {
                     volume: 0.3,
                 });
+                // Setup win
+                win = new BABYLON.Sound("Cooldown", "Sounds/party.mp3", scene, null, {
+                    volume: 0.5,
+                });
             }
 
             function setupGUI() {
                 // GUI
                 var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
+                // This shouldn't be a button, but I'm lazy and it works
                 hud = BABYLON.GUI.Button.CreateSimpleButton("but1", "Targets remaining: " + targetNum);
                 hud.width = "200px"
                 hud.height = "50px";
@@ -341,9 +477,9 @@
             setupMaterials();
             setupWater();
             setupGround();
-            t1 = setupTarget(new BABYLON.Vector3(7.5, 2, -0.15), Math.PI/2, Math.PI/2);
-            t2 = setupTarget(new BABYLON.Vector3(16.5, 2, -0.15), Math.PI/2, Math.PI/2);
+            hideTargets();
             setupBridge();
+            setupWalls();
             setupViewModel();
             setupSprites();
             setupParticles();
@@ -460,23 +596,30 @@
                         if (shoot()) {
                             pickedResult = scene.pickWithRay(ray);
                             if (pickedResult.hit) {
+                                // Get hit location for collision particles
                                 hitSystem.direction1 = new BABYLON.Vector3(-ray.direction.x - 0.4, -ray.direction.y - 0.4, -ray.direction.z - 0.4);
                                 hitSystem.direction2 = new BABYLON.Vector3(-ray.direction.x + 0.4, -ray.direction.y + 0.4, -ray.direction.z + 0.4);
                                 hitSystem.emitter = pickedResult.pickedPoint;
                                 hitSystem.start();
+                                // Set position for ricochet found
                                 impact.setPosition(pickedResult.pickedPoint);
+                                // Play ricochet on slight delay
                                 setTimeout(() => {  impact.play(); }, 100)
                                 console.log(pickedResult.pickedPoint);
                                 var mesh = pickedResult.pickedMesh;
+                                // Check for target
                                 if (mesh.uniqueId == 1) {
+                                    // Change to green target
                                     mesh.material = target2Mat;
                                     mesh.uniqueId = 0;
                                     targetNum--;
+                                    // Check for win con
                                     if (targetNum != 0) {
                                         hud.textBlock.text = "Targets remaining: " + targetNum;
                                     }
                                     else {
                                         hud.textBlock.text = "You win!!";
+                                        win.play();
                                         setTimeout(() => {
                                             var check = confirm("You won! Reset the targets?");
                                             if (check) {
@@ -487,7 +630,7 @@
                                                 }
                                                 hud.textBlock.text = "Targets remaining: " + targetNum;
                                             }
-                                        }, 1000)
+                                        }, 3000)
 
                                     }
                                     ding.play();
@@ -501,7 +644,6 @@
                     lPointerDown = false;
                 }
             });
-
             return scene;
         }
         /******* End of the create scene function ******/
@@ -554,6 +696,7 @@
             if (canvas.requestPointerLock) canvas.requestPointerLock();
         });
 
+        var fly = false;
         document.addEventListener("keydown", function (e) {
             // console.log(e.keyCode);
             if (e.keyCode == 27) {
@@ -561,6 +704,18 @@
             }
             else if (e.keyCode == 32) {
                 jump();
+            }
+            else if (e.keyCode == 70) {
+                if (!fly) {
+                    scene.cameras[0].applyGravity = false;
+                    scene.cameras[0].checkCollisions = false;
+                    fly = true;
+                }
+                else {
+                    scene.cameras[0].applyGravity = true;
+                    scene.cameras[0].checkCollisions = true;
+                    fly = false;
+                }
             }
             else if (e.keyCode == 16) {
                 scene.cameras[0].speed = 0.8;
